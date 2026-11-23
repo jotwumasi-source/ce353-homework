@@ -50,9 +50,10 @@
       });
     },
     adminCheck: function (key) { return Promise.resolve(key === 'admin' ? { ok: true } : { error: 'Wrong lecturer password. (Demo password: admin)' }); },
-    adminStats: function () { var n = 0, st = 0; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf('hw3demo:acct:') === 0) n++; if (k.indexOf('hw3demo:sess:') === 0) st++; } } catch (e) {} return Promise.resolve({ ok: true, title: CFG.title, deadline: DEADLINE, roster: n, registered: n, started: st, finished: 0, mean: null }); },
+    adminStats: function () { var n = 0, st = 0; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.indexOf('hw3demo:acct:') === 0) n++; if (k.indexOf('hw3demo:sess:') === 0) st++; } } catch (e) {} return Promise.resolve({ ok: true, title: CFG.title, deadline: DEADLINE, roster: n, registered: n, started: st, finished: 0, mean: null, flagged: [], flaggedCount: 0 }); },
     adminPreview: function (key, idx, ans) { var i = /^\d{5,10}$/.test(idx) ? idx : '0000000'; return Promise.resolve({ ok: true, index: i, title: CFG.title, pre: E.buildAll(i).map(ans ? E.adminView : E.publicView) }); },
-    adminStudent: function (key, idx) { var a = Demo.get('acct:' + idx); return Promise.resolve(a ? { ok: true, name: a.name, registered: true, state: Demo.get('sess:' + idx) ? 'started' : 'not started', score: 0, per: [] } : { error: 'Index number not on the class list (demo: only registered students).' }); },
+    adminStudent: function (key, idx) { var a = Demo.get('acct:' + idx); return Promise.resolve(a ? { ok: true, name: a.name, registered: true, state: Demo.get('sess:' + idx) ? 'started' : 'not started', score: 0, per: [], activity: [] } : { error: 'Index number not on the class list (demo: only registered students).' }); },
+    log: function () { return Promise.resolve({ ok: true }); },
     save: function (tok, answers) { var s = Demo.sess(tok); if (s && !s.submitted) { s.answers = answers; Demo.set('sess:' + tok, s); return Promise.resolve({ ok: true }); } return Promise.resolve({ ok: false, closed: true }); },
     submit: function (tok, answers) { var s = Demo.get('sess:' + tok); if (s) { s.answers = answers; s.submitted = true; Demo.set('sess:' + tok, s); } return Promise.resolve({ ok: true }); }
   };
@@ -67,6 +68,7 @@
     adminStats: function (key) { return Live.call({ action: 'admin_stats', key: key }); },
     adminPreview: function (key, idx, ans) { return Live.call({ action: 'admin_preview', key: key, index: idx, answers: !!ans }); },
     adminStudent: function (key, idx) { return Live.call({ action: 'admin_student', key: key, index: idx }); },
+    log: function (tok, ev) { return Live.call({ action: 'log', token: tok, events: ev }); },
     save: function (tok, a) { return Live.call({ action: 'save', token: tok, answers: a }); },
     submit: function (tok, a) { return Live.call({ action: 'submit', token: tok, answers: a }); }
   };
@@ -110,7 +112,7 @@
 
   /* ---------------- home ---------------- */
   function loadHome() {
-    clearInterval(S.homeTick);
+    stopMon(); clearInterval(S.homeTick);
     API.home(S.idx, S.dev).then(function (r) {
       if (r.error) { if (r.signedOut) ls('dev', null); showLogin(ls('idx') ? 'signin' : 'register'); if (r.error && !r.signedOut) $('signErr').textContent = r.error; return; }
       S.name = r.who; S.offset = r.now - Date.now(); S.hw = r.hw; renderHome(r); show('home');
@@ -121,7 +123,7 @@
     var first = String(S.name).split(',').pop().trim().split(' ')[0] || ''; first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
     $('hWho').textContent = S.name + ' · ' + S.idx; $('hHello').textContent = first ? 'Hello, ' + first : 'Homework';
     var hw = r.hw, c = '', dl = dateText(hw.deadline);
-    if (hw.state === 'open') c = '<h2>' + esc(hw.title) + '</h2><p>' + esc(CFG.subtitle || '') + '</p><p>Closes ' + esc(dl) + '.</p><p>You have ' + Math.round(DUR / 3600000) + ' hours from the moment you start. If you start late, your time ends at the closing time.</p><button class="btn" id="goStart">Start ' + esc(hw.title) + '</button>';
+    if (hw.state === 'open') c = '<h2>' + esc(hw.title) + '</h2><p>' + esc(CFG.subtitle || '') + '</p><p>Closes ' + esc(dl) + '.</p><p>You have ' + Math.round(DUR / 3600000) + ' hours from the moment you start. If you start late, your time ends at the closing time.</p><p>While the homework is open, leaving the page, switching window or tab, and copying, pasting or printing are recorded and shown to your lecturer.</p><button class="btn" id="goStart">Start ' + esc(hw.title) + '</button>';
     else if (hw.state === 'running') c = '<h2>' + esc(hw.title) + '</h2><p>In progress. Time left</p><div class="big" id="hLeft">' + fmt(hw.endsAt - (Date.now() + S.offset)) + '</div><button class="btn" id="goStart">Continue</button>';
     else if (hw.state === 'submitted') c = '<h2>' + esc(hw.title) + '</h2><p>Submitted. ' + (r.results.released ? 'Your marks are below.' : 'Your marks appear here after the homework closes on ' + esc(dl) + '.') + '</p>';
     else c = '<h2>' + esc(hw.title) + '</h2><p>This homework has closed. You did not start it.</p>';
@@ -134,7 +136,7 @@
   }
   function startFlow() {
     var running = S.hw && S.hw.state === 'running';
-    var go = running ? Promise.resolve(true) : sheet('Start ' + S.hw.title + '?', 'Your ' + Math.round(DUR / 3600000) + ' hours begin now and cannot be paused. If you start late, your time ends at the closing time.', 'Start now', 'Not yet');
+    var go = running ? Promise.resolve(true) : sheet('Start ' + S.hw.title + '?', 'Your ' + Math.round(DUR / 3600000) + ' hours begin now and cannot be paused. If you start late, your time ends at the closing time. Leaving the page, switching window or tab, and copying, pasting or printing are recorded and shown to your lecturer.', 'Start now', 'Not yet');
     go.then(function (ok) { if (!ok) return; API.start(S.idx, S.dev).then(function (r) { if (r.error) { sheet('Cannot start', r.error, 'OK'); return; } if (r.mode === 'exam') startExam(r); else loadHome(); }).catch(function () { sheet('No connection', NOCONN, 'OK'); }); });
   }
 
@@ -144,17 +146,17 @@
     $('who').textContent = S.preview ? 'Lecturer preview' : (r.title || S.hw.title); show('exam');
     var h = window.DATASHEET || '';
     S.pre.forEach(function (p, pi) {
-      h += '<div class="sec"><div class="eyebrow">Preamble ' + p.id + ' of 10</div><h2>' + esc(p.title) + '</h2><p class="pre">' + p.text + '</p><div class="fig">' + p.svg + '<div class="cap">' + esc(p.cap || '') + '</div></div>';
+      h += '<div class="sec"><div class="eyebrow">Preamble ' + p.id + ' of 10</div><h2>' + esc(p.title) + '</h2><p class="pre noselect">' + p.text + '</p><div class="fig noselect">' + p.svg + '<div class="cap">' + esc(p.cap || '') + '</div></div>';
       p.qs.forEach(function (q, qi) {
         var v = ((S.answers[pi] || [])[qi]); v = v == null ? '' : v;
-        h += '<div class="q"><div class="n">' + p.id + '.' + (qi + 1) + '</div><div class="t">' + esc(q.t) + (q.ans !== undefined ? '<div class="ans">Answer: ' + esc(q.ans) + ' ' + esc(q.unit) + '</div>' : '') + '</div><div class="a"><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-p="' + pi + '" data-q="' + qi + '" value="' + esc(v) + '"><span class="u">' + esc(q.unit) + '</span></div></div>';
+        h += '<div class="q"><div class="n">' + p.id + '.' + (qi + 1) + '</div><div class="t noselect">' + esc(q.t) + (q.ans !== undefined ? '<div class="ans">Answer: ' + esc(q.ans) + ' ' + esc(q.unit) + '</div>' : '') + '</div><div class="a"><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-p="' + pi + '" data-q="' + qi + '" value="' + esc(v) + '"><span class="u">' + esc(q.unit) + '</span></div></div>';
       });
       h += '</div>';
     });
     h += S.preview ? '<div class="foot"><p>Preview only. Nothing is saved.</p><button class="btn" id="finish">Close preview</button></div>' : '<div class="foot"><p>Give each answer to 3 significant figures. Answers are accepted within 1%.</p><p>Everything saves automatically.</p><button class="btn" id="finish">Finish and submit</button></div>';
     $('paper').innerHTML = h; renderMath();
     $('paper').oninput = onInput; $('finish').onclick = finish;
-    updateCount(); clearInterval(S.tick);
+    startMon(); updateCount(); clearInterval(S.tick);
     if (S.preview) { $('timer').textContent = 'Preview'; $('count').textContent = 'No timer, nothing saved'; $('progBar').style.width = '0'; } else { S.tick = setInterval(tick, 500); tick(); }
   }
   function renderMath() { try { if (window.renderMathInElement) window.renderMathInElement($('paper'), { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {} }
@@ -200,8 +202,17 @@
       $('aTitle').textContent = r.title;
       var row = function (a, b) { return '<tr><td>' + a + '</td><td class="r">' + b + '</td></tr>'; };
       $('aStats').innerHTML = '<table>' + row('On the class list', r.roster) + row('Registered', r.registered) + row('Started', r.started) + row('Finished', r.finished) + row('Mean score of those finished', r.mean == null ? 'n/a' : r.mean.toFixed(1) + ' / 100') + row('Closes', esc(dateText(r.deadline))) + '</table>';
+      var fl = r.flagged || [];
+      $('aFlags').innerHTML = fl.length ? '<table class="flagtab"><tr><th>Index</th><th>Name</th><th class="r">Times away</th><th class="r">Seconds away</th><th class="r">Copy / print</th></tr>' + fl.map(function (x) { return '<tr><td>' + esc(x.index) + '</td><td>' + esc(x.name) + '</td><td class="r">' + x.count + '</td><td class="r">' + x.secs + '</td><td class="r">' + x.other + '</td></tr>'; }).join('') + '</table><p class="note">' + (r.flaggedCount || fl.length) + ' student(s) have any activity recorded. Short absences can be innocent (a notification, an alert). Look at the pattern and the length.</p>' : '<p class="note">Nothing recorded yet.</p>';
       show('admin');
     }).catch(function () { showLogin('admin'); $('admErr').textContent = NOCONN; });
+  }
+  function actHtml(r) {
+    var a = r.activity || []; if (!a.length) return '<br><span class="note">No activity recorded.</span>';
+    var away = a.filter(function (x) { return x.t === 'away'; }), other = a.filter(function (x) { return x.t !== 'away'; });
+    var tot = away.reduce(function (m, x) { return m + x.d; }, 0);
+    var tm = function (ms) { var d = new Date(ms); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()); };
+    return '<br><br><b>Activity</b>: left the page ' + away.length + ' time(s), ' + Math.round(tot / 1000) + ' s in total; ' + other.length + ' other event(s).<br>' + a.map(function (x) { return tm(x.at) + ' ' + esc(x.t) + (x.t === 'away' ? ' ' + Math.round(x.d / 1000) + ' s' : '') + (x.x ? ' ' + esc(x.x) : ''); }).join('<br>');
   }
   $('pGo').onclick = function () {
     var idx = $('pIdx').value.trim().replace(/\s+/g, ''), btn = $('pGo'); busy(btn, true);
@@ -209,9 +220,41 @@
   };
   $('lGo').onclick = function () {
     var idx = $('lIdx').value.trim().replace(/\s+/g, ''); $('lOut').textContent = '';
-    API.adminStudent(akey(), idx).then(function (r) { $('lOut').innerHTML = r.error ? esc(r.error) : '<b>' + esc(r.name) + '</b><br>Registered: ' + (r.registered ? 'yes' : 'no') + '<br>Status: ' + esc(r.state) + (r.per && r.per.length ? '<br>Score: ' + r.score + ' / 100 (' + r.per.map(function (x) { return x.score; }).join(', ') + ')' : ''); });
+    API.adminStudent(akey(), idx).then(function (r) { $('lOut').innerHTML = r.error ? esc(r.error) : '<b>' + esc(r.name) + '</b><br>Registered: ' + (r.registered ? 'yes' : 'no') + '<br>Status: ' + esc(r.state) + (r.per && r.per.length ? '<br>Score: ' + r.score + ' / 100 (' + r.per.map(function (x) { return x.score; }).join(', ') + ')' : '') + actHtml(r); });
   };
   $('aOut').onclick = function () { try { sessionStorage.removeItem('hw_akey'); } catch (e) {} showLogin(ls('idx') ? 'signin' : 'register'); };
+
+  /* ---------------- exam integrity (recorded for the lecturer; students are told) ---------------- */
+  var MON = { on: false, q: [], away: null, timer: null };
+  function inExam() { return !$('exam').classList.contains('hidden') && !S.preview; }
+  function monLog(type, dur, x) { if (!MON.on) return; MON.q.push({ t: type, at: Date.now(), d: dur || 0, x: x || '' }); clearTimeout(MON.timer); MON.timer = setTimeout(monFlush, 4000); }
+  function monFlush() { if (!MON.q.length || !S.token || S.preview) return; var b = MON.q.splice(0, 80); API.log(S.token, b).catch(function () { MON.q = b.concat(MON.q); }); }
+  function awayStart() { if (MON.on && MON.away === null) MON.away = Date.now(); }
+  function awayEnd() { if (MON.on && MON.away !== null && document.visibilityState === 'visible' && document.hasFocus()) { var d = Date.now() - MON.away; MON.away = null; if (d >= 1000) monLog('away', d); monFlush(); } }
+  window.addEventListener('blur', awayStart); window.addEventListener('focus', awayEnd);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') awayStart(); else awayEnd(); });
+  function setWm(text) {
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' width='380' height='240'><text x='190' y='125' text-anchor='middle' transform='rotate(-24 190 120)' font-family='Arial' font-size='21' fill='black' fill-opacity='0.07'>" + text.replace(/[<&>']/g, '') + "</text></svg>";
+    $('wm').style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'; $('wm').classList.remove('hidden');
+  }
+  function startMon() {
+    MON.on = !S.preview; MON.q = []; MON.away = null; setWm(S.preview ? 'LECTURER PREVIEW' : (S.idx + '  ' + String(S.name).split(',')[0]));
+  }
+  function stopMon() { monFlush(); MON.on = false; $('wm').classList.add('hidden'); }
+  ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      if (!inExam()) return; var t = e.target, isIn = t && t.closest && t.closest('input');
+      if (isIn && (ev === 'selectstart' || ev === 'copy' || ev === 'cut')) return;
+      e.preventDefault(); monLog(ev);
+    });
+  });
+  document.addEventListener('paste', function (e) { if (inExam()) { e.preventDefault(); monLog('paste'); } });
+  document.addEventListener('keydown', function (e) {
+    if (!inExam()) return; var k = String(e.key || '').toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if (k === 'printscreen') { monLog('printscreen'); try { navigator.clipboard.writeText(' '); } catch (x) {} return; }
+    if ((mod && ['p', 's', 'u'].indexOf(k) >= 0) || k === 'f12' || (mod && e.shiftKey && ['i', 'j', 'c'].indexOf(k) >= 0)) { e.preventDefault(); monLog('shortcut', 0, k); }
+  });
+  window.addEventListener('beforeprint', function () { if (inExam()) monLog('print'); });
 
   /* ---------------- start ---------------- */
   var i0 = ls('idx'), d0 = ls('dev');

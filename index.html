@@ -37,6 +37,10 @@
   .card .big{font-variant-numeric:tabular-nums;font-size:34px;font-weight:600;color:var(--ink);letter-spacing:-.01em;margin:8px 0 0}
   .card .btn{max-width:320px;margin-top:20px}
   .ans{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--mut);margin-top:2px}
+  .noselect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #wm{position:fixed;inset:0;pointer-events:none;z-index:4;background-repeat:repeat}
+  @media print{#exam,#wm{display:none!important} body::before{content:"Printing is not available for this page.";display:block;padding:40px;font-size:18px}}
+  .flagtab td{font-size:14px;padding:8px 0}
   .outl{text-align:center;margin:26px 0 70px;font-size:14px} .outl a{color:var(--mut);cursor:pointer;text-decoration:underline}
   /* ---------- exam ---------- */
   .bar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
@@ -124,6 +128,7 @@
       <ul>
         <li><b>Register once.</b> Your index number and full name must match the class list. After that you only need your PIN, and on the same phone or laptop you are signed in automatically.</li>
         <li><b>Your own numbers.</b> Every student has different values.</li>
+        <li><b>Integrity.</b> While a homework is open, leaving the page, switching window or tab, and copying, pasting or printing are recorded and shown to your lecturer.</li>
       </ul>
     </div>
     <div class="outl" style="margin-top:0"><a id="toAdmin">Lecturer</a></div>
@@ -146,6 +151,7 @@
       <label style="display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--ink);font-size:15px"><input type="checkbox" id="pAns" style="width:auto"> Show the correct answers beside each question</label>
       <button class="btn" id="pGo">Open preview</button>
     </div>
+    <div class="card"><h2>Activity flags</h2><p class="note">Students who left the exam page, switched window or tab, minimised it, or tried to copy, paste or print. Only you can see this.</p><div id="aFlags"></div></div>
     <div class="card">
       <h2>Look up a student</h2>
       <label for="lIdx">Index number</label>
@@ -186,6 +192,8 @@
   </div>
   <main id="paper"></main>
 </section>
+
+<div id="wm" class="hidden"></div>
 
 <div class="sheet hidden" id="sheet"><div class="box">
   <h3 id="sheetH"></h3><p id="sheetP"></p>
