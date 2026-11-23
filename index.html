@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CE 353 Homework</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+  :root{ --bg:#ffffff; --bg2:#ffffff; --ink:#111111; --mut:#6b6b6b; --line:#d9d9d9; --acc:#111111; --acc-h:#333333; --bad:#8a3b00; --btn-ink:#ffffff; --serif:'KaTeX_Main','Latin Modern Roman','Times New Roman',Times,serif; }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.47 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .hidden{display:none!important}
+  main{max-width:760px;margin:0 auto;padding:0 22px}
+  /* ---------- login and home ---------- */
+  .hero{padding:72px 0 28px;text-align:center}
+  .eyebrow{font-size:14px;color:var(--mut);letter-spacing:.02em}
+  h1{font-size:48px;line-height:1.08;font-weight:600;letter-spacing:-.025em;margin:6px 0 10px}
+  .sub{font-size:21px;line-height:1.38;color:var(--mut);margin:0 auto;max-width:520px;font-weight:400}
+  .panel{max-width:420px;margin:34px auto 0}
+  label{display:block;font-size:13px;color:var(--mut);margin:18px 0 6px}
+  input[type=text],input[type=password]{width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 14px;outline:none;transition:border-color .15s,box-shadow .15s}
+  input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,0,0,.12)}
+  .btn{display:block;width:100%;margin-top:24px;font:inherit;font-size:17px;font-weight:500;color:var(--btn-ink);background:var(--acc);border:0;border-radius:980px;padding:13px 22px;cursor:pointer;transition:background .15s,opacity .15s}
+  .btn:hover{background:var(--acc-h)} .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)} .btn.ghost:hover{background:#f5f5f5}
+  .err{color:var(--bad);font-size:14px;margin-top:14px;min-height:20px;text-align:center}
+  .switch{text-align:center;margin-top:18px;font-size:15px;color:var(--mut)} .switch a{color:var(--ink);text-decoration:underline;cursor:pointer}
+  .hint{font-size:13px;color:var(--mut);margin-top:6px}
+  .rules{margin:38px auto 64px;max-width:420px;color:var(--mut);font-size:14px;line-height:1.5}
+  .rules li{margin:0 0 6px} .rules ul{padding-left:18px;margin:0}
+  .rules b{color:var(--ink);font-weight:500}
+  .card{border:1px solid var(--line);border-radius:18px;padding:26px;margin:30px 0 0}
+  .card h2{font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+  .card p{margin:0 0 4px;color:var(--mut);font-size:16px}
+  .card .big{font-variant-numeric:tabular-nums;font-size:34px;font-weight:600;color:var(--ink);letter-spacing:-.01em;margin:8px 0 0}
+  .card .btn{max-width:320px;margin-top:20px}
+  .ans{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;font-size:13px;color:var(--mut);margin-top:2px}
+  .outl{text-align:center;margin:26px 0 70px;font-size:14px} .outl a{color:var(--mut);cursor:pointer;text-decoration:underline}
+  /* ---------- exam ---------- */
+  .bar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+  .bar .in{max-width:760px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px}
+  .bar .l{color:var(--mut)} .bar .l b{color:var(--ink);font-weight:600}
+  .timer{font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;letter-spacing:-.01em}
+  .timer.low{color:var(--bad)}
+  .prog{height:2px;background:var(--line)} .prog i{display:block;height:2px;width:0;background:var(--ink);transition:width .3s}
+  .sec{padding:56px 0 20px;border-bottom:1px solid var(--line)}
+  .sec h2{font-family:var(--serif);font-size:32px;line-height:1.12;font-weight:700;letter-spacing:-.02em;margin:2px 0 14px}
+  .pre{font-family:var(--serif);font-size:19px;line-height:1.65;margin:0 0 20px;text-align:justify;hyphens:auto}
+  .fig{margin:6px 0 30px;text-align:center} .fig svg{display:block;width:100%;height:auto} .katex{font-size:1.04em} .cap{font-family:var(--serif);font-size:15px;color:var(--ink);margin-top:6px}
+  .q{display:grid;grid-template-columns:34px 1fr minmax(140px,190px);gap:6px 12px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
+  .q:first-of-type{border-top:0}
+  .q .n{color:var(--mut);font-size:14px;font-variant-numeric:tabular-nums}
+  .q .t{font-family:var(--serif);font-size:18px;line-height:1.45}
+  .q .a{position:relative}
+  .q input{padding:10px 40px 10px 12px;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
+  .q .u{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:13px;pointer-events:none}
+  .foot{padding:44px 0 90px;text-align:center}
+  .foot p{color:var(--mut);font-size:14px;margin:0 0 6px}
+  .foot .btn{max-width:320px;margin:22px auto 0}
+  .saved{font-size:13px;color:var(--mut);min-width:70px;text-align:right}
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:22px;z-index:20}
+  .sheet .box{background:var(--bg);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center}
+  .sheet h3{font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em} .sheet p{color:var(--mut);font-size:15px;margin:0}
+  /* ---------- marks ---------- */
+  .score{font-size:80px;line-height:1;font-weight:600;letter-spacing:-.04em;margin:14px 0 2px}
+  .score small{font-size:28px;color:var(--mut);font-weight:400;letter-spacing:-.01em}
+  table{width:100%;border-collapse:collapse;margin:14px 0 8px;font-size:16px}
+  th{font-weight:500;color:var(--mut);font-size:13px;text-align:left;padding:8px 0;border-bottom:1px solid var(--line)}
+  td{padding:12px 0;border-bottom:1px solid var(--line)} td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  .h3{font-size:24px;font-weight:600;letter-spacing:-.015em;margin:44px 0 6px}
+  .note{color:var(--mut);font-size:14px}
+  details.data{margin:40px 0 0;border:1px solid var(--line);border-radius:14px;padding:4px 18px} details.data summary{cursor:pointer;font-size:16px;font-weight:600;padding:12px 0} .dbody{font-family:var(--serif);font-size:17px;line-height:1.6;padding-bottom:10px} .dbody p{margin:0 0 12px} table.dt{margin:6px 0 14px;font-size:15px} table.dt td{padding:5px 10px;border:1px solid var(--line);text-align:center}
+  @media (max-width:560px){
+    h1{font-size:38px} .sub{font-size:18px} .sec h2{font-size:26px}
+    .q{grid-template-columns:30px 1fr} .q .a{grid-column:2} .score{font-size:64px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ SIGN IN / REGISTER ============ -->
+<section id="login">
+  <main>
+    <div class="hero">
+      <div class="eyebrow">CE 353 Reinforced Concrete Design</div>
+      <h1>Homework</h1>
+      <p class="sub">Sign in to start your homework and to see your marks.</p>
+    </div>
+
+    <form class="panel" id="regForm" autocomplete="off">
+      <label for="rIdx">Index number</label>
+      <input id="rIdx" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      <label for="rNm">Full name, as on the class list</label>
+      <input id="rNm" type="text" autocomplete="off" spellcheck="false">
+      <label for="rPin">Choose a PIN (4 to 8 digits)</label>
+      <input id="rPin" type="password" inputmode="numeric" autocomplete="new-password" spellcheck="false">
+      <div class="hint">You will use this PIN to sign in again. Do not share it.</div>
+      <button class="btn" type="submit">Register</button>
+      <div class="err" id="regErr" role="alert"></div>
+      <div class="switch">Already registered? <a id="toSign">Sign in</a></div>
+    </form>
+
+    <form class="panel hidden" id="signForm" autocomplete="off">
+      <label for="sIdx">Index number</label>
+      <input id="sIdx" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      <label for="sPin">PIN</label>
+      <input id="sPin" type="password" inputmode="numeric" autocomplete="current-password" spellcheck="false">
+      <button class="btn" type="submit">Sign in</button>
+      <div class="err" id="signErr" role="alert"></div>
+      <div class="switch">First time here? <a id="toReg">Register</a><br>Forgot your PIN? Ask your lecturer to reset it.</div>
+    </form>
+
+    <form class="panel hidden" id="admForm" autocomplete="off">
+      <label for="aKey">Lecturer password</label>
+      <input id="aKey" type="password" autocomplete="off" spellcheck="false">
+      <button class="btn" type="submit">Open lecturer view</button>
+      <div class="err" id="admErr" role="alert"></div>
+      <div class="switch"><a id="admBack">Back to student sign-in</a></div>
+    </form>
+
+    <div class="rules">
+      <ul>
+        <li><b>Register once.</b> Your index number and full name must match the class list. After that you only need your PIN, and on the same phone or laptop you are signed in automatically.</li>
+        <li><b>Your own numbers.</b> Every student has different values.</li>
+      </ul>
+    </div>
+    <div class="outl" style="margin-top:0"><a id="toAdmin">Lecturer</a></div>
+  </main>
+</section>
+
+<!-- ============ LECTURER ============ -->
+<section id="admin" class="hidden">
+  <main>
+    <div class="hero" style="padding-bottom:0">
+      <div class="eyebrow">Lecturer view</div>
+      <h1>Overview</h1>
+    </div>
+    <div class="card"><h2 id="aTitle">Homework</h2><div id="aStats"></div></div>
+    <div class="card">
+      <h2>See the student view</h2>
+      <p>Opens the homework exactly as a student sees it. Nothing is saved and no timer runs. Leave the index number empty for a sample student, or enter a real one to see that student's numbers.</p>
+      <label for="pIdx">Index number (optional)</label>
+      <input id="pIdx" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--ink);font-size:15px"><input type="checkbox" id="pAns" style="width:auto"> Show the correct answers beside each question</label>
+      <button class="btn" id="pGo">Open preview</button>
+    </div>
+    <div class="card">
+      <h2>Look up a student</h2>
+      <label for="lIdx">Index number</label>
+      <input id="lIdx" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      <button class="btn ghost" id="lGo">Look up</button>
+      <div id="lOut" class="note" style="margin-top:14px"></div>
+    </div>
+    <div class="outl"><a id="aOut">Sign out of lecturer view</a></div>
+  </main>
+</section>
+
+<!-- ============ HOME ============ -->
+<section id="home" class="hidden">
+  <main>
+    <div class="hero" style="padding-bottom:0">
+      <div class="eyebrow" id="hWho"></div>
+      <h1 id="hHello">Homework</h1>
+    </div>
+
+    <div class="card" id="hwCard"></div>
+
+    <div class="h3">Your marks</div>
+    <table id="mPrior"></table>
+    <div id="mDetail"></div>
+    <div class="outl"><a id="signOut">Sign out</a></div>
+  </main>
+</section>
+
+<!-- ============ EXAM ============ -->
+<section id="exam" class="hidden">
+  <div class="bar">
+    <div class="in">
+      <div class="l"><b id="who"></b><br><span id="count"></span></div>
+      <div class="saved" id="saved"></div>
+      <div class="timer" id="timer">4:00:00</div>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+  </div>
+  <main id="paper"></main>
+</section>
+
+<div class="sheet hidden" id="sheet"><div class="box">
+  <h3 id="sheetH"></h3><p id="sheetP"></p>
+  <button class="btn" id="sheetOk" style="margin-top:22px"></button>
+  <button class="btn ghost" id="sheetNo" style="margin-top:10px"></button>
+</div></div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script defer src="config.js"></script>
+<script defer src="datasheet.js"></script>
+<script defer src="app.js"></script>
+</body>
+</html>
